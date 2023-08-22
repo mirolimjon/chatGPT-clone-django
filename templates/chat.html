@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+<!-- Title -->
+{% block title %}
+    <title>ChatApp</title>
+{% endblock title %}
+
+<!-- Content -->
+{% block content %}
+<div class="container mt-5">
+    <br>
+    <div class="row">
+      <div class="col-md-8">
+        <div class="list-unstyled messages-list">
+            <div class="message-text">
+            {% for chat in chats %}
+              <p>You: <small style="margin-left: 560px;">{{ chat.created }}</small></p>
+              <div class="alert alert-dark" role="alert">
+                  {{ chat.message }}
+              </div>
+
+              <p>Gpt Bot:</p>
+              <div class="alert alert-success" role="alert">
+                  {{ chat.response|safe }}
+              </div>
+
+            {% endfor %}
+            </div>
+        </div>
+      </div>
+  
+      <div class="col-md-4">
+        <div class="alert alert-dark" role="alert">
+            Answers your questions through ChatGPT's api
+        </div>
+        <form class="message-form mt-5 fixed-right">
+          {%csrf_token%}
+          <div class="input-group">
+            <input type="text" class="form-control message-input" placeholder="Type your message...">
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-primary btn-send">Send</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+</div>
+
+<script>
+    const messagesList = document.querySelector('.messages-list');
+    const messageForm = document.querySelector('.message-form');
+    const messageInput = document.querySelector('.message-input');
+
+    messageForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const message = messageInput.value.trim();
+        if (message.length === 0) {
+        return;
+        }
+        const messageItem = document.createElement('li');
+        messageItem.classList.add('message', 'sent');
+        messageItem.innerHTML = `
+            <div class="message-text">
+                <p>You:</p>
+                <div class="alert alert-dark" role="alert">
+                    ${message}
+                </div>
+            </div>`;
+        messagesList.appendChild(messageItem);
+    
+        messageInput.value = '';
+    
+        fetch('', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'message': message
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            const response = data.response;
+            const messageItem = document.createElement('li');
+            messageItem.classList.add('message', 'received');
+            messageItem.innerHTML = `
+            <div class="message-text">
+                <p>Bot:</p>
+                <div class="alert alert-success" role="alert">
+                    ${response}
+                </div>
+            </div>
+              `;
+
+              
+            messagesList.appendChild(messageItem);
+          });
+      });
+</script>
+{% endblock content %}
